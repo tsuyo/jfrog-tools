@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "Usage: $0 [-p <project>] -k <repo_key> -t <repo_type>"
+    exit 0
+}
+
+notfound() {
+    echo "No such repo type"
+    exit 1
+}
+
+template() {
+    case $1 in
+        'docker-local')  echo '"rclass":"local","packageType":"docker","repoLayoutRef":"simple-default","xrayIndex":"true"';;
+        'docker-remote') echo '"rclass":"remote","packageType":"docker","repoLayoutRef":"simple-default","url":"https://registry-1.docker.io/","xrayIndex":"true"';;
+        'docker')        echo '"rclass":"virtual","packageType":"docker","repoLayoutRef":"simple-default"';;
+
+        'go-local')  echo '"rclass":"local","packageType":"go","repoLayoutRef":"go-default","xrayIndex":"true"';;
+        'go-remote') echo '"rclass":"remote","packageType":"go","repoLayoutRef":"go-default","url":"https://proxy.golang.org/","vcsGitProvider":"ARTIFACTORY","xrayIndex":"true"';;
+        'go')        echo '"rclass":"virtual","packageType":"go","repoLayoutRef":"go-default"';;
+
+        'gradle-local')  echo '"rclass":"local","packageType":"gradle","repoLayoutRef":"maven-2-default","xrayIndex":"true"';;
+        'gradle-remote') echo '"rclass":"remote","packageType":"gradle","repoLayoutRef":"maven-2-default","url":"https://repo1.maven.org/maven2/","xrayIndex":"true"';;
+        'gradle')        echo '"rclass":"virtual","packageType":"gradle","repoLayoutRef":"maven-2-default"';;
+
+        'maven-local')  echo '"rclass":"local","packageType":"maven","repoLayoutRef":"maven-2-default","xrayIndex":"true"';;
+        'maven-remote') echo '"rclass":"remote","packageType":"maven","repoLayoutRef":"maven-2-default","url":"https://repo1.maven.org/maven2/","xrayIndex":"true"';;
+        'maven')        echo '"rclass":"virtual","packageType":"maven","repoLayoutRef":"maven-2-default"';;
+
+        'npm-local')  echo '"rclass":"local","packageType":"npm","repoLayoutRef":"npm-default","xrayIndex":"true"';;
+        'npm-remote') echo '"rclass":"remote","packageType":"npm","repoLayoutRef":"npm-default","url":"https://registry.npmjs.org","vcsGitProvider":"ARTIFACTORY","xrayIndex":"true"';;
+        'npm')        echo '"rclass":"virtual","packageType":"npm","repoLayoutRef":"npm-default"';;
+
+        'pypi-local')  echo '"rclass":"local","packageType":"pypi","repoLayoutRef":"simple-default","xrayIndex":"true"';;
+        'pypi-remote') echo '"rclass":"remote","packageType":"pypi","repoLayoutRef":"simple-default","url":"https://files.pythonhosted.org","vcsGitProvider":"ARTIFACTORY","xrayIndex":"true"';;
+        'pypi')        echo '"rclass":"virtual","packageType":"pypi","repoLayoutRef":"simple-default"';;
+
+        *) echo 'NOTFOUND';;
+    esac
+}
+
+### Main
+project=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?p:k:t:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+    p)  project=$OPTARG
+        ;;
+    k)  repo_key=$OPTARG
+        ;;
+    t)  repo_type=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+# arg=$1 # no argument for this script
+
+if [ "$repo_key" == "" ] || [ "$repo_type" == "" ]; then
+    usage
+fi
+
+temp=$(template $repo_type)
+if [ "$temp" == "NOTFOUND" ]; then
+    notfound
+fi
+
+echo "create repos (project: \"${project}\", repo_key: \"${repo_key}\", repo_type: \"${repo_type})\""
+
+if [ "$project" == "" ]; then
+    # create a local and a remote repos
+    for x in 'local' 'remote'; do
+        temp=$(template "$repo_type-$x")
+        conf="{\"key\":\"$repo_key-$repo_type-$x\",$temp}"
+        jf rt rc <(echo $conf)
+    done
+    # create a virtual repo
+    temp=$(template "$repo_type")
+    conf="{\"key\":\"$repo_key-$repo_type\",$temp,\"repositories\":\"$repo_key-$repo_type-local,$repo_key-$repo_type-remote\",\"defaultDeploymentRepo\":\"$repo_key-$repo_type-local\"}"
+    jf rt rc <(echo $conf)
+else
+    # create a local and a remote repos
+    for x in 'local' 'remote'; do
+        temp=$(template "$repo_type-$x")
+        conf="{\"projectKey\":\"$project\",\"key\":\"$project-$repo_key-$repo_type-$x\",$temp}"
+        jf rt rc <(echo $conf)
+    done
+    # create a virtual repo
+    temp=$(template "$repo_type")
+    conf="{\"projectKey\":\"$project\",\"key\":\"$project-$repo_key-$repo_type\",$temp,\"repositories\":\"$project-$repo_key-$repo_type-local,$project-$repo_key-$repo_type-remote\",\"defaultDeploymentRepo\":\"$project-$repo_key-$repo_type-local\"}"
+    jf rt rc <(echo $conf)
+fi    

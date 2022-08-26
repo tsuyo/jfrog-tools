@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "Usage: $0 [-p <project>] -k <repo_key> -t <repo_type>"
+    exit 0
+}
+
+### Main
+project=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?p:k:t:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+    p)  project=$OPTARG
+        ;;
+    k)  repo_key=$OPTARG
+        ;;
+    t)  repo_type=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+# arg=$1 # no argument for this script
+
+if [ "$repo_key" == "" ] || [ "$repo_type" == "" ]; then
+    usage
+fi
+
+echo "delete repos"
+if [ "$project" == "" ]; then
+    # delete a local, a remote and a virtual repos
+    for x in '-local' '-remote' ''; do
+        jf rt rdel --quiet "${repo_key}-${repo_type}$x"
+    done
+else
+    # delete a local, a remote and a virtual repos
+    for x in '-local' '-remote' ''; do
+        jf rt rdel --quiet "${project}-${repo_key}-${repo_type}$x"
+    done
+fi
