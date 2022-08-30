@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+error_message() {
+    list=`echo $(jf c s | grep "Server ID:" | awk '{print $3}') | sed "s/ /, /g"`
+    echo "Usage: `basename $0` -s <server_id> ($list) [-u <user>] [-p <password>]"
+    exit 0
+}
+
+server_id=""
+user=""
+password=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?s:u:p:" opt; do
+    case "$opt" in
+    h|\?)
+        error_message
+        ;;
+    s)  server_id=$OPTARG
+        ;;
+    u)  user=$OPTARG
+        ;;
+    p)  password=$OPTARG
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+if [ "$server_id" == "" ]; then
+  error_message
+fi
+
+if [ "$user" == "" ]; then
+    read -p "user: " user
+fi
+
+if [ "$password" == "" ]; then
+    read -sp "password: " password
+    echo ""
+fi
+
+if [ "$user" == "" ] || [ "$password" == "" ]; then
+  error_message
+fi
+
+url=`jf c s $server_id | head -2 | tail -1 | awk '{print $4}'`
+url=${url::-1}
+
+CURL="curl -u ${user}:${password}"
+
+artifactory=`$CURL $url/artifactory/api/system/version -s | jq ".version"`
+xray=`$CURL $url/xray/api/v1/system/version -s | jq ".xray_version"`
+distribution=`$CURL $url/distribution/api/v1/system/info -s | sed 's/404 page not found/{}/' | jq ".version"`
+pipelines=`$CURL $url/pipelines/api/v1/system/info -s | sed 's/404 page not found/{}/' | jq ".version"`
+
+echo "{artifactory:$artifactory, xray:$xray, distribution:$distribution, pipelines:$pipelines}"

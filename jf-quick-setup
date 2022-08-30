@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "Usage: $0 [-p <project>] -k <repo_key> -t <repo_type>"
+    echo "Usage: `basename $0` [-p <project>] -k <repo_key> -t <repo_type>"
     exit 0
 }
 

@@ -2,7 +2,7 @@
 
 error_message() {
     list=`echo $(jf c s | grep "Server ID:" | awk '{print $3}') | sed "s/ /, /g"`
-    echo "Usage: $0 -s <server_id> ($list) [-p] [-t <token>] <project>"
+    echo "Usage: `basename $0` -s <server_id> ($list) [-p] [-t <token>] <project>"
     exit 0
 }
 

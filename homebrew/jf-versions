@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-artifactory=`jf rt curl /api/system/version -s | jq ".version"`
-xray=`jf xr curl /api/v1/system/version -s | jq ".xray_version"`
-
-echo "{artifactory:$artifactory, xray:$xray}"
