@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# clean local cache
+go clean -modcache

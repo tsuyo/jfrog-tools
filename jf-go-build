@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+usage() {
+    list=`echo $(jf c s | grep "Server ID:" | awk '{print $3}') | sed "s/ /, /g"`
+    echo "Usage: `basename $0` -s <server_id> ($list) [-p <project>] -r <repo_name> -v <version> <build_name> <build_number>"
+    exit 0
+}
+
+### Main
+project=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?s:p:r:v:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+    s)  server_id=$OPTARG
+        ;;
+    p)  project=$OPTARG
+        ;;
+    r)  repo_name=$OPTARG
+        ;;
+    v)  version=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+build_name=$1
+build_number=$2
+
+if [ -z "$server_id" ] || [ -z "$repo_name" ] || [ -z "$version" ] || [ -z "$build_name" ] || [ -z "$build_number" ]; then
+    usage
+fi
+
+if [ "$project" != "" ]; then
+    repo_name="${project}-${repo_name}"
+fi
+
+printf "build & deploy with\n"
+printf '  server_id: "%s"\n' ${server_id}
+printf '  project: "%s"\n' ${project}
+printf '  repo_name: "%s"\n' ${repo_name}
+printf '  version: "%s"\n' ${version}
+printf '  build_name: "%s"\n' ${build_name}
+printf '  build_number: "%s"\n' ${build_number}
+printf '\n'
+
+
+`dirname $0`/jf-go-clean
+jf goc --repo-deploy=$repo_name --repo-resolve=$repo_name --server-id-deploy=$server_id --server-id-resolve=$server_id
+if [ "$project" == "" ]; then
+    jf go build --build-name=${build_name} --build-number=${build_number}
+    jf gp ${version} --build-name=${build_name} --build-number=${build_number}
+    jf rt bce ${build_name} ${build_number}
+    jf rt bag ${build_name} ${build_number}
+    jf rt bp ${build_name} ${build_number}
+else
+    jf go build --project=${project} --build-name=${build_name} --build-number=${build_number}
+    jf gp ${version} --project=${project} --build-name=${build_name} --build-number=${build_number}
+    jf rt bce --project=${project} ${build_name} ${build_number}
+    jf rt bag --project=${project} ${build_name} ${build_number}
+    jf rt bp --project=${project} ${build_name} ${build_number}
+fi

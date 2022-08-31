@@ -7,6 +7,8 @@ JFrog Tools are a collection of tools for JFrog Products
 - jf-quick-teardown: Delete all repos created by jf-quick-setup
 - jf-get-versions: Get JFrog Platform verions
 - jf-docker-build: Build & Deploy against Docker registry in JFrog Artifactory with BuildInfo
+- jf-go-clean: Clean local caches for Go
+- jf-go-build: Build & Deploy against Go repository in JFrog Artifactory with BuildInfo
 
 ## Installation
 Mac
