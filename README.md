@@ -6,6 +6,7 @@ JFrog Tools are a collection of tools for JFrog Products
 - jf-quick-setup: Create local/remote/virtual repos (CLI version of "Quick Setup (Quick Repository Creation)")
 - jf-quick-teardown: Delete all repos created by jf-quick-setup
 - jf-get-versions: Get JFrog Platform verions
+- jf-docker-build: Build & Deploy against Docker registry in JFrog Artifactory with BuildInfo
 
 ## Installation
 Mac

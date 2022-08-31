@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "Usage: `basename $0` [-p <project>] -u <registry_url> -r <registry_name> -i <image_name> -v <version> <build_name> <build_number>"
+    exit 0
+}
+
+### Main
+project=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?p:u:r:i:v:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+    p)  project=$OPTARG
+        ;;
+    u)  registry_url=$OPTARG
+        ;;
+    r)  registry_name=$OPTARG
+        ;;
+    i)  image_name=$OPTARG
+        ;;
+    v)  version=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+build_name=$1
+build_number=$2
+
+if [ -z "$registry_url" ] || [ -z "$registry_name" ] || [ -z "$image_name" ] || [ -z "$version" ] || [ -z "$build_name" ] || [ -z "$build_number" ]; then
+    usage
+fi
+
+if [ "$project" != "" ]; then
+    registry_name="${project}-${registry_name}"
+fi
+
+printf "build & deploy with\n"
+printf '  project: "%s"\n' ${project}
+printf '  registry_url: "%s"\n' ${registry_url}
+printf '  registry_name: "%s"\n' ${registry_name}
+printf '  image_name: "%s"\n' ${image_name}
+printf '  version: "%s"\n' ${version}
+printf '  build_name: "%s"\n' ${build_name}
+printf '  build_number: "%s"\n' ${build_number}
+printf '\n'
+
+docker login ${registry_url}
+docker build --no-cache --build-arg REG=${registry_url}/${registry_name} -t ${registry_url}/${registry_name}/${image_name}:${version} .
+if [ "$project" == "" ]; then
+    jf docker push ${registry_url}/${registry_name}/${image_name}:${version} --build-name=${build_name} --build-number=${build_number}
+    jf rt bce ${build_name} ${build_number}
+    jf rt bag ${build_name} ${build_number}
+    jf rt bp ${build_name} ${build_number}
+else
+    jf docker push ${registry_url}/${registry_name}/${image_name}:${version} --project=${project} --build-name=${build_name} --build-number=${build_number}
+    jf rt bce --project=${project} ${build_name} ${build_number}
+    jf rt bag --project=${project} ${build_name} ${build_number}
+    jf rt bp --project=${project} ${build_name} ${build_number}
+fi
