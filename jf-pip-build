@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+usage() {
+    list=`echo $(jf c s | grep "Server ID:" | awk '{print $3}') | sed "s/ /, /g"`
+    echo "Usage: `basename $0` -s <server_id> ($list) [-p <project>] -r <repo_name> <build_name> <build_number>"
+    exit 0
+}
+
+### Main
+project=""
+
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
+while getopts "h?s:p:r:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        ;;
+    s)  server_id=$OPTARG
+        ;;
+    p)  project=$OPTARG
+        ;;
+    r)  repo_name=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+build_name=$1
+build_number=$2
+
+if [ -z "$server_id" ] || [ -z "$repo_name" ] || [ -z "$build_name" ] || [ -z "$build_number" ]; then
+    usage
+fi
+
+if [ "$project" != "" ]; then
+    repo_name="${project}-${repo_name}"
+fi
+
+printf "build & deploy with\n"
+printf '  server_id: "%s"\n' ${server_id}
+printf '  project: "%s"\n' ${project}
+printf '  repo_name: "%s"\n' ${repo_name}
+printf '  build_name: "%s"\n' ${build_name}
+printf '  build_number: "%s"\n' ${build_number}
+printf '\n'
+
+
+`dirname $0`/jf-pip-clean
+jf pipc --repo-resolve=${repo_name} --server-id-resolve=${server_id}
+
+url=`jf c s $server_id | head -2 | tail -1 | awk '{print $4}'`
+url=${url::-1}
+repository_url="${url}/artifactory/api/pypi/${repo_name}"
+
+# Preparation
+python3 -m venv venv
+. venv/bin/activate
+python3 -m pip install --upgrade pip
+
+if [ "$project" == "" ]; then
+    # Resolve dependencies
+    jf pip install -r requirements.txt --build-name=${build_name} --build-number=${build_number}--no-cache-dir --force-reinstall
+    # Build
+    python3 -m pip install --upgrade setuptools wheel
+    python3 setup.py sdist bdist_wheel
+    # Publish
+    python3 -m pip install --upgrade twine
+    python3 -m twine upload --repository-url ${repository_url} dist/*
+    jf rt bce ${build_name} ${build_number}
+    jf rt bag ${build_name} ${build_number}
+    jf rt bp ${build_name} ${build_number}
+else
+    # Resolve dependencies
+    jf pip install -r requirements.txt --project=${project} --build-name=${build_name} --build-number=${build_number}--no-cache-dir --force-reinstall
+    # Build
+    python3 -m pip install --upgrade setuptools wheel
+    python3 setup.py sdist bdist_wheel
+    # Publish
+    python3 -m pip install --upgrade twine
+    python3 -m twine upload --repository-url ${repository_url} dist/*
+    jf rt bce --project=${project} ${build_name} ${build_number}
+    jf rt bag --project=${project} ${build_name} ${build_number}
+    jf rt bp --project=${project} ${build_name} ${build_number}
+fi
+
+# Clean up
+deactivate

@@ -15,6 +15,8 @@ JFrog Tools are a collection of tools for JFrog Products
 - jf-mvn-build: Build & Deploy against Maven repository in JFrog Artifactory with BuildInfo
 - jf-npm-clean: Clean local caches for NPM
 - jf-npm-build: Build & Deploy against NPM repository in JFrog Artifactory with BuildInfo
+- jf-pip-clean: Clean local caches for PyPI
+- jf-pip-build: Build & Deploy against PyPI repository in JFrog Artifactory with BuildInfo
 
 ## Installation
 Mac

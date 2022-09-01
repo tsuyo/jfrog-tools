@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# clean local cache
+rm -fr build dist venv
+find src -name __pycache__ | xargs rm -fr
+find src -name "*.egg-info" | xargs rm -fr
