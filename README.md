@@ -11,6 +11,8 @@ JFrog Tools are a collection of tools for JFrog Products
 - jf-go-build: Build & Deploy against Go repository in JFrog Artifactory with BuildInfo
 - jf-mvn-clean: Clean local caches for Maven
 - jf-mvn-build: Build & Deploy against Maven repository in JFrog Artifactory with BuildInfo
+- jf-gradle-clean: Clean local caches for Gradle
+- jf-gradle-build: Build & Deploy against Gradle repository in JFrog Artifactory with BuildInfo
 
 ## Installation
 Mac

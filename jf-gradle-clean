@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# clean local cache
+rm -fr $HOME/.gradle/caches
