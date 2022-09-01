@@ -9,10 +9,12 @@ JFrog Tools are a collection of tools for JFrog Products
 - jf-docker-build: Build & Deploy against Docker registry in JFrog Artifactory with BuildInfo
 - jf-go-clean: Clean local caches for Go
 - jf-go-build: Build & Deploy against Go repository in JFrog Artifactory with BuildInfo
-- jf-mvn-clean: Clean local caches for Maven
-- jf-mvn-build: Build & Deploy against Maven repository in JFrog Artifactory with BuildInfo
 - jf-gradle-clean: Clean local caches for Gradle
 - jf-gradle-build: Build & Deploy against Gradle repository in JFrog Artifactory with BuildInfo
+- jf-mvn-clean: Clean local caches for Maven
+- jf-mvn-build: Build & Deploy against Maven repository in JFrog Artifactory with BuildInfo
+- jf-npm-clean: Clean local caches for NPM
+- jf-npm-build: Build & Deploy against NPM repository in JFrog Artifactory with BuildInfo
 
 ## Installation
 Mac
